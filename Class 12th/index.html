@@ -535,72 +535,212 @@ if ("serviceWorker" in navigator) {
 }
 </script>
 <script>
-const secretSequence = ['n','i','s','h','a','n','t']; // sequence to type
-let seqPos = 0;
-let headerClicks = 0;
-const clicksToReveal = 5;
+(() => {
+  const secretSequence = ['n','i','s','h','a','n','t'];
+  let seqPos = 0;
+  let headerClicks = 0;
+  const clicksToReveal = 5;
 
-// Create a small modal/popup (initially hidden)
-const secretModal = document.createElement('div');
-secretModal.id = 'secret-modal';
-secretModal.style.position = 'fixed';
-secretModal.style.left = '50%';
-secretModal.style.top = '50%';
-secretModal.style.transform = 'translate(-50%,-50%) scale(0.95)';
-secretModal.style.padding = '18px 22px';
-secretModal.style.borderRadius = '12px';
-secretModal.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
-secretModal.style.background = 'linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.7))';
-secretModal.style.color = '#fff';
-secretModal.style.zIndex = 9999;
-secretModal.style.opacity = 0;
-secretModal.style.pointerEvents = 'none';
-secretModal.style.transition = 'opacity .25s ease, transform .25s ease';
-secretModal.innerHTML = `<strong style="font-size:1.05rem">Owner</strong><div style="margin-top:6px;font-weight:600;font-size:1.15rem">Nishant Jha</div>
-<button id="secret-close" style="margin-top:10px;padding:6px 10px;border-radius:8px;border:0;cursor:pointer">Close</button>`;
-document.body.appendChild(secretModal);
-
-// show/hide helpers
-function showSecret(){
-  secretModal.style.pointerEvents = 'auto';
-  secretModal.style.opacity = 1;
-  secretModal.style.transform = 'translate(-50%,-50%) scale(1)';
-}
-function hideSecret(){
-  secretModal.style.pointerEvents = 'none';
-  secretModal.style.opacity = 0;
-  secretModal.style.transform = 'translate(-50%,-50%) scale(0.95)';
-}
-document.getElementById('secret-close').addEventListener('click', hideSecret);
-
-// key sequence listener
-document.addEventListener('keydown', (e)=>{
-  const key = e.key.toLowerCase();
-  if(key === secretSequence[seqPos]){
-    seqPos++;
-    if(seqPos === secretSequence.length){
-      seqPos = 0;
-      showSecret();
-    }
-  } else {
-    // reset if wrong key (simple behavior)
-    seqPos = (key === secretSequence[0]) ? 1 : 0;
+  // create style block
+  const style = document.createElement('style');
+  style.textContent = `
+  /* secret modal styles */
+  #secret-modal {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(.9);
+    min-width: 320px;
+    max-width: 420px;
+    border-radius: 18px;
+    padding: 18px;
+    z-index: 99999;
+    box-shadow: 0 18px 60px rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px) saturate(120%);
+    -webkit-backdrop-filter: blur(10px) saturate(120%);
+    border: 1px solid rgba(255,255,255,0.06);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .28s ease, transform .28s cubic-bezier(.2,.9,.2,1);
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 12px;
+    align-items: center;
   }
-});
+  #secret-modal.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, -50%) scale(1);
+  }
 
-// header click listener (alternate reveal)
-const headerEl = document.querySelector('header h1') || document.querySelector('header');
-if(headerEl){
-  headerEl.addEventListener('click', ()=>{
-    headerClicks++;
-    if(headerClicks >= clicksToReveal){
-      headerClicks = 0;
-      showSecret();
+  #secret-avatar {
+    width: 72px; height: 72px; border-radius: 14px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:1.2rem; color:#111;
+    background: linear-gradient(135deg, #ffb6c1, #ffc0cb);
+    box-shadow: 0 6px 24px rgba(255,182,193,0.18);
+    border: 1px solid rgba(255,255,255,0.14);
+    flex-shrink:0;
+  }
+
+  #secret-body { color: var(--dark-text, #fff); }
+  #secret-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: .4px;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg,#00f260,#0575e6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  #secret-name {
+    font-size: 1.2rem; font-weight:800; margin-bottom:6px;
+  }
+  #secret-sub {
+    font-size: 0.85rem; opacity:0.85; margin-bottom:8px;
+  }
+  #secret-actions { display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:6px; }
+
+  .secret-btn {
+    padding:8px 12px; border-radius:10px; border:0; font-weight:700; cursor:pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    transition: transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  .secret-btn:active{ transform: translateY(1px) scale(.995); }
+  #close-secret { background: linear-gradient(90deg,#2b2b2b,#101010); color:#fff; }
+  #copy-secret { background: linear-gradient(90deg,#36d1dc,#5b86e5); color:#fff; }
+
+  /* decorative underline */
+  #secret-underline {
+    height:6px; border-radius:6px; margin-top:6px; width:100%;
+    background: linear-gradient(90deg, rgba(0,242,255,0.18), rgba(255,0,150,0.12));
+    filter: blur(6px);
+  }
+
+  /* tiny sparkle animation */
+  #secret-sparkle {
+    position:absolute; right:-10px; top:-10px; width:44px; height:44px; pointer-events:none;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.2) 10%, transparent 20%),
+                radial-gradient(circle at 70% 70%, rgba(255,255,255,0.8) 0%, transparent 18%);
+    border-radius:50%;
+    filter: blur(6px);
+    opacity: .0;
+    transform: scale(.6);
+    transition: opacity .35s ease, transform .35s cubic-bezier(.2,.9,.2,1);
+  }
+  #secret-modal.show #secret-sparkle { opacity:.9; transform: scale(1); }
+
+  /* responsive */
+  @media (max-width:420px) {
+    #secret-modal { left:50%; width:92%; grid-template-columns:56px 1fr; padding:12px; }
+    #secret-avatar{ width:56px; height:56px; border-radius:12px; font-size:1rem;}
+  }
+  `;
+  document.head.appendChild(style);
+
+  // build modal element
+  const wrap = document.createElement('div');
+  wrap.id = 'secret-modal';
+  wrap.setAttribute('role', 'dialog');
+  wrap.setAttribute('aria-hidden', 'true');
+  wrap.innerHTML = `
+    <div id="secret-avatar" aria-hidden="true">NJ</div>
+    <div id="secret-body">
+      <div id="secret-title">Owner • PrepGuide</div>
+      <div id="secret-name">Nishant Jha</div>
+      <div id="secret-sub">Creator & quietly tracking progress ✨</div>
+      <div id="secret-underline" aria-hidden="true"></div>
+      <div id="secret-actions">
+        <button id="copy-secret" class="secret-btn" title="Copy name">Copy</button>
+        <button id="close-secret" class="secret-btn" title="Close">Close</button>
+      </div>
+    </div>
+    <div id="secret-sparkle" aria-hidden="true"></div>
+  `;
+  document.body.appendChild(wrap);
+
+  // show/hide helpers
+  const showSecret = () => {
+    wrap.classList.add('show');
+    wrap.setAttribute('aria-hidden','false');
+    // small flash on reveal: briefly pulse header
+    const header = document.querySelector('header h1');
+    if(header){
+      header.animate([{filter:'brightness(1)'},{filter:'brightness(1.6)'},{filter:'brightness(1)'}], {duration:450, easing:'ease-out'});
     }
-    // reset after 2s inactivity
-    if(window._headerClickTimer) clearTimeout(window._headerClickTimer);
-    window._headerClickTimer = setTimeout(()=> headerClicks = 0, 2000);
+  };
+  const hideSecret = () => {
+    wrap.classList.remove('show');
+    wrap.setAttribute('aria-hidden','true');
+  };
+
+  // copy button behavior
+  document.addEventListener('click', (e) => {
+    if(!e.target) return;
+    if(e.target.id === 'copy-secret'){
+      navigator.clipboard?.writeText?.('Nishant Jha').then(()=>{
+        e.target.textContent = 'Copied ✓';
+        setTimeout(()=> e.target.textContent = 'Copy', 1400);
+      }).catch(()=> {
+        e.target.textContent = 'Copied';
+        setTimeout(()=> e.target.textContent = 'Copy', 1200);
+      });
+    } else if(e.target.id === 'close-secret'){
+      hideSecret();
+    }
   });
-}</script>
+
+  // key sequence listener
+  document.addEventListener('keydown', (e) => {
+    const key = (e.key || '').toLowerCase();
+    if(key === secretSequence[seqPos]){
+      seqPos++;
+      if(seqPos === secretSequence.length){
+        seqPos = 0;
+        showSecret();
+      }
+    } else {
+      seqPos = (key === secretSequence[0]) ? 1 : 0;
+    }
+  });
+
+  // header click listener
+  const headerEl = document.querySelector('header h1') || document.querySelector('header');
+  if(headerEl){
+    headerEl.style.cursor = 'pointer';
+    headerEl.addEventListener('click', () => {
+      headerClicks++;
+      if(headerClicks >= clicksToReveal){
+        headerClicks = 0;
+        showSecret();
+      }
+      if(window._secretHeaderTimer) clearTimeout(window._secretHeaderTimer);
+      window._secretHeaderTimer = setTimeout(()=> headerClicks = 0, 2000);
+    });
+  }
+
+  // optional: detect long-press on footer as alternate reveal (gentle stealth)
+  const footer = document.querySelector('footer');
+  if(footer){
+    let pressTimer = null;
+    footer.addEventListener('pointerdown', () => {
+      pressTimer = setTimeout(() => showSecret(), 900);
+    });
+    footer.addEventListener('pointerup', ()=> { if(pressTimer) clearTimeout(pressTimer); });
+    footer.addEventListener('pointerleave', ()=> { if(pressTimer) clearTimeout(pressTimer); });
+  }
+
+  // click outside to close
+  document.addEventListener('click', (ev) => {
+    if(!wrap.contains(ev.target) && wrap.classList.contains('show')) hideSecret();
+  });
+
+  // ensure modal isn't focus-trap intrusive; accessible close via Escape
+  document.addEventListener('keydown', (ev) => {
+    if(ev.key === 'Escape' && wrap.classList.contains('show')) hideSecret();
+  });
+
+})();
+</script>
 </body>
 </html>
