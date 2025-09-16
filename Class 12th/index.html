@@ -87,13 +87,13 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: transparent; /* No gradient */
+  background: transparent; /* no background */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 0 10px rgba(255,255,255,0.2);
-  transition: all 0.3s ease;
 }
 
 .theme-orb:hover {
@@ -106,20 +106,7 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
 }
 
 #theme-icon {
-  font-size: 24px;
-  transition: color 0.3s ease, transform 0.3s ease;
-}
-
-/* For light mode icon */
-body.light #theme-icon {
-  color: #000; /* Sun is black */
-  transform: scale(1.1);
-}
-
-/* For dark mode icon */
-body:not(.light) #theme-icon {
-  color: #fff; /* Moon is white */
-  transform: scale(1);
+  transition: fill 0.3s ease, transform 0.3s ease;
 }
 
 
@@ -405,8 +392,12 @@ body.light .progress-text{
 <h1>PrepGuide</h1>
 <p>Track your progress and master every chapter! 🌟</p>
 <button id="theme-toggle" class="theme-orb">
-  <span id="theme-icon">🌙</span>
+  <svg id="theme-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <!-- Moon icon as default -->
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+  </svg>
 </button>
+>
 
 
 </div>
@@ -622,18 +613,23 @@ if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setIte
 const themeToggle = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 
+const moonPath = "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"; // black moon
+const sunPath = "M12 4V2M12 22v-2M4.22 4.22l-1.42-1.42M21.2 21.2l-1.42-1.42M2 12H4M20 12h2M4.22 19.78l-1.42 1.42M21.2 2.8l-1.42 1.42M12 6a6 6 0 100 12 6 6 0 000-12z"; // white sun
+
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light');
   
-  // Update icon manually
   if(document.body.classList.contains('light')){
-    themeIcon.textContent = '☀️';
+    themeIcon.setAttribute("fill", "black");
+    themeIcon.innerHTML = `<path d="${sunPath}" />`;
   } else {
-    themeIcon.textContent = '🌙';
+    themeIcon.setAttribute("fill", "white");
+    themeIcon.innerHTML = `<path d="${moonPath}" />`;
   }
 
-  render(searchInput.value); // your existing render call
+  render(searchInput.value);
 });
+
 
 
 
