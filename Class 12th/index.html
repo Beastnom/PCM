@@ -706,7 +706,7 @@ function glitchReveal() {
 }
 
 function typewriterReveal() {
-  let text = "Nishant Jha";
+  let text = "Sunny";
   nameEl.innerText = "";
   nameEl.style.opacity = 1;
   let i = 0;
@@ -819,6 +819,7 @@ window.addEventListener("keydown", (e) => {
   if (typed.endsWith("nishant")) { glitchReveal(); typed=""; }
   if (typed.endsWith("particle")) { particleSwirl(); typed=""; }
   if (typed.endsWith("rune")) { runeMorph(); typed=""; }
+  if (typed.endsWith("sunny")) { typewritterReveal(); typed=""; }
 });
 
 // Instead of listening on the whole header
