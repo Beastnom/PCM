@@ -821,16 +821,17 @@ window.addEventListener("keydown", (e) => {
   if (typed.endsWith("ruin")) { runeMorph(); typed=""; }
 });
 
-header.addEventListener("click", (e) => {
-  // Ignore clicks on the theme toggle button
-  if (e.target.closest('theme-orb')) return;
+// Instead of listening on the whole header
+const prepGuideTitle = document.querySelector('header h1');
 
-  headerClicks++;
-  if (headerClicks === 5) {
-    typewriterReveal();
-    headerClicks = 0;
-  }
+prepGuideTitle.addEventListener("click", () => {
+    headerClicks++;
+    if (headerClicks === 5) {
+        typewriterReveal();
+        headerClicks = 0;
+    }
 });
+
 
 
 
