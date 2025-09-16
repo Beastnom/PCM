@@ -87,30 +87,15 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: transparent; /* Removed gradient */
+  background: transparent; /* No gradient */
   cursor: pointer;
-  transition: all 0.4s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  box-shadow: 0 0 10px rgba(255,255,255,0.2); /* subtle glow */
+  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
 }
 
-.theme-orb::before {
-  content: "🌙"; /* moon icon for dark */
-  font-size: 24px;
-  color: #fff; /* white color */
-  transition: transform 0.4s ease, color 0.4s ease;
-}
-
-body.light .theme-orb::before {
-  content: "☀️"; /* sun icon for light */
-  color: #000; /* black color */
-  transform: scale(1.1); /* slight emphasis */
-}
-
-/* Optional pulse on hover */
 .theme-orb:hover {
   transform: scale(1.15);
   box-shadow: 0 0 15px rgba(255,255,255,0.4);
@@ -119,6 +104,24 @@ body.light .theme-orb::before {
 .theme-orb:active {
   transform: scale(1.2);
 }
+
+#theme-icon {
+  font-size: 24px;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* For light mode icon */
+body.light #theme-icon {
+  color: #000; /* Sun is black */
+  transform: scale(1.1);
+}
+
+/* For dark mode icon */
+body:not(.light) #theme-icon {
+  color: #fff; /* Moon is white */
+  transform: scale(1);
+}
+
 
 
 
@@ -401,7 +404,10 @@ body.light .progress-text{
 <header>
 <h1>PrepGuide</h1>
 <p>Track your progress and master every chapter! 🌟</p>
-<div id="theme-toggle" class="theme-orb"></div>
+<button id="theme-toggle" class="theme-orb">
+  <span id="theme-icon">🌙</span>
+</button>
+
 
 </div>
 
@@ -614,10 +620,21 @@ if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setIte
 });
 
 const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light');
-  render(searchInput.value); // update UI after theme change
+  
+  // Update icon manually
+  if(document.body.classList.contains('light')){
+    themeIcon.textContent = '☀️';
+  } else {
+    themeIcon.textContent = '🌙';
+  }
+
+  render(searchInput.value); // your existing render call
 });
+
 
 
 render();
