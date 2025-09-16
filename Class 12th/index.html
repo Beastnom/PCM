@@ -534,5 +534,73 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
+<script>
+const secretSequence = ['n','i','s','h','a','n','t']; // sequence to type
+let seqPos = 0;
+let headerClicks = 0;
+const clicksToReveal = 5;
+
+// Create a small modal/popup (initially hidden)
+const secretModal = document.createElement('div');
+secretModal.id = 'secret-modal';
+secretModal.style.position = 'fixed';
+secretModal.style.left = '50%';
+secretModal.style.top = '50%';
+secretModal.style.transform = 'translate(-50%,-50%) scale(0.95)';
+secretModal.style.padding = '18px 22px';
+secretModal.style.borderRadius = '12px';
+secretModal.style.boxShadow = '0 10px 40px rgba(0,0,0,0.5)';
+secretModal.style.background = 'linear-gradient(180deg, rgba(0,0,0,0.85), rgba(0,0,0,0.7))';
+secretModal.style.color = '#fff';
+secretModal.style.zIndex = 9999;
+secretModal.style.opacity = 0;
+secretModal.style.pointerEvents = 'none';
+secretModal.style.transition = 'opacity .25s ease, transform .25s ease';
+secretModal.innerHTML = `<strong style="font-size:1.05rem">Owner</strong><div style="margin-top:6px;font-weight:600;font-size:1.15rem">Nishant Jha</div>
+<button id="secret-close" style="margin-top:10px;padding:6px 10px;border-radius:8px;border:0;cursor:pointer">Close</button>`;
+document.body.appendChild(secretModal);
+
+// show/hide helpers
+function showSecret(){
+  secretModal.style.pointerEvents = 'auto';
+  secretModal.style.opacity = 1;
+  secretModal.style.transform = 'translate(-50%,-50%) scale(1)';
+}
+function hideSecret(){
+  secretModal.style.pointerEvents = 'none';
+  secretModal.style.opacity = 0;
+  secretModal.style.transform = 'translate(-50%,-50%) scale(0.95)';
+}
+document.getElementById('secret-close').addEventListener('click', hideSecret);
+
+// key sequence listener
+document.addEventListener('keydown', (e)=>{
+  const key = e.key.toLowerCase();
+  if(key === secretSequence[seqPos]){
+    seqPos++;
+    if(seqPos === secretSequence.length){
+      seqPos = 0;
+      showSecret();
+    }
+  } else {
+    // reset if wrong key (simple behavior)
+    seqPos = (key === secretSequence[0]) ? 1 : 0;
+  }
+});
+
+// header click listener (alternate reveal)
+const headerEl = document.querySelector('header h1') || document.querySelector('header');
+if(headerEl){
+  headerEl.addEventListener('click', ()=>{
+    headerClicks++;
+    if(headerClicks >= clicksToReveal){
+      headerClicks = 0;
+      showSecret();
+    }
+    // reset after 2s inactivity
+    if(window._headerClickTimer) clearTimeout(window._headerClickTimer);
+    window._headerClickTimer = setTimeout(()=> headerClicks = 0, 2000);
+  });
+}</script>
 </body>
 </html>
