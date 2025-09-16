@@ -91,6 +91,48 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
 }
 #theme-toggle:hover{ transform: scale(1.1) rotate(10deg); }
 
+/* Theme Switch Container */
+.theme-switch {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 60px;
+  height: 32px;
+  border-radius: 20px;
+  background: linear-gradient(135deg,#ff4e50,#f9d423); /* default dark theme */
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  padding: 3px;
+  transition: all 0.4s ease;
+}
+
+/* Handle */
+.switch-handle {
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+  transition: all 0.4s ease;
+}
+
+/* Light Mode Styles */
+body.light .theme-switch {
+  background: linear-gradient(135deg,#36d1dc,#5b86e5);
+}
+
+body.light .switch-handle {
+  transform: translateX(28px); /* slide handle to right */
+}
+
+/* Hover Effect */
+.theme-switch:hover {
+  transform: scale(1.1);
+}
+
+
 
 .container{ max-width:980px; margin:20px auto; padding:10px; }
 
@@ -370,7 +412,10 @@ body.light .progress-text{
 <header>
 <h1>PrepGuide</h1>
 <p>Track your progress and master every chapter! 🌟</p>
-<button id="theme-toggle">🌙</button>
+<div id="theme-toggle" class="theme-switch">
+  <div class="switch-handle"></div>
+</div>
+
 </header>
 
 <div class="container">
@@ -579,12 +624,12 @@ document.getElementById('reset-btn').addEventListener('click',()=>{
 if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setItem('jeeChecklist',JSON.stringify(saved)); render(searchInput.value);}
 });
 
-const themeToggle=document.getElementById('theme-toggle');
-themeToggle.addEventListener('click',()=>{
-document.body.classList.toggle('light');
-themeToggle.textContent=document.body.classList.contains('light')?'☀️':'🌙';
-render(searchInput.value);
+const themeToggle = document.getElementById('theme-toggle');
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('light');
+  render(searchInput.value); 
 });
+
 
 render();
 </script>
