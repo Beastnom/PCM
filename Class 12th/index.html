@@ -300,6 +300,69 @@ body.light .progress-text{
   color:#222;
 }
 
+/* Styled name text */
+.reveal-name {
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ff6ec7, #6a5af9, #00d2ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+  animation: glowPulse 2s infinite alternate;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  pointer-events: none;
+}
+
+@keyframes glowPulse {
+  from { text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+  to   { text-shadow: 0 0 25px rgba(255,255,255,0.9); }
+}
+
+/* Sparkles */
+.sparkle {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, #fff, transparent);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* Shatter overlay */
+.shatter-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  display: none;
+  overflow: hidden;
+}
+
+.shard {
+  position: absolute;
+  width: 100px; height: 100px;
+  background: rgba(255,255,255,0.2);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.8;
+  animation: fall 1s forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(200px) rotate(180deg);
+    opacity: 0;
+  }
+}
+
 </style>
 <!-- ✅ PWA manifest + theme color -->
 <link rel="manifest" href="manifest.json">
@@ -341,6 +404,9 @@ body.light .progress-text{
 <div class="progress-container"><div id="english-bar" class="progress-bar"></div><div id="english-text" class="progress-text">0%</div></div>
 
 </div>
+<div id="name" class="reveal-name">Nishant Jha</div>
+<div id="shatter" class="shatter-overlay"></div>
+
 
 <div id="checklist"></div>
 </div>
@@ -534,484 +600,171 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script><!-- ===== Stylish secret owner modal (fixed header click) ===== -->
-<!-- ===== Stylish secret owner modal with continuous sparkles + footer long press ===== -->
-<!-- ====== Multi-mode Secret Reveal (paste before </body>) ====== -->
 <script>
-(() => {
-  /* === CONFIG / TRIGGERS === */
-  const secretName = 'Nishant Jha';
-  const seq = ['n','i','s','h','a','n','t'];
-  const seqTimeout = 700; // ms to reset sequence if slow typing
-  let seqPos = 0, seqTimer = null;
-  let headerClicks = 0;
-  const clicksToReveal = 5;
-  let footerPressTimer = null;
+const nameEl = document.getElementById('name');
+const shatterOverlay = document.getElementById('shatter');
+const header = document.querySelector('header');
+const footer = document.querySelector('footer');
 
-  /* Utility: create DOM container for an effect */
-  function makeOverlay(id) {
-    const o = document.createElement('div');
-    o.className = 'secret-overlay';
-    o.id = id;
-    Object.assign(o.style, {
-      position: 'fixed',
-      left: 0, top: 0, width: '100vw', height: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      pointerEvents: 'none', zIndex: 99998
-    });
-    document.body.appendChild(o);
-    return o;
-  }
-  function cleanUp(el, timeout = 600) {
-    if(!el) return;
-    el.style.transition = 'opacity .45s ease';
-    el.style.opacity = '0';
-    setTimeout(()=>{ try{ el.remove(); }catch(e){} }, timeout);
-  }
+let typed = "";
+let headerClicks = 0;
+let footerTimer;
 
-  /* Small helper for sparkles */
-  function spawnSparkle(x, y, parent, color='#fff', size=8, life=900) {
-    const s = document.createElement('div');
-    s.className = 'mini-sparkle';
-    Object.assign(s.style, {
-      position:'absolute',
-      left: (x - size/2) + 'px',
-      top: (y - size/2) + 'px',
-      width: size + 'px',
-      height: size + 'px',
-      borderRadius: '50%',
-      pointerEvents: 'none',
-      background: `radial-gradient(circle, ${color} 0%, rgba(255,255,255,0.25) 50%, transparent 70%)`,
-      opacity: 0,
-      transform: 'scale(.6)',
-      filter: 'blur(0.6px)',
-      transition: `all ${life/1000}s linear`
-    });
-    parent.appendChild(s);
-    requestAnimationFrame(()=> {
-      s.style.opacity = 1;
-      s.style.transform = 'translateY(-18px) scale(1.2)';
-      s.style.left = (x + (Math.random()*30-15)) + 'px';
-      s.style.top = (y + (Math.random()*40-20)) + 'px';
-    });
-    setTimeout(()=> s.remove(), life);
-  }
+function showName(duration=2000) {
+  nameEl.style.opacity = 1;
+  setTimeout(() => { nameEl.style.opacity = 0; }, duration);
+}
 
-  /* ===== 1) GLITCH REVEAL (typing trigger 'nishant') ===== */
-  function playGlitchReveal() {
-    const overlay = makeOverlay('glitch-overlay');
-    overlay.style.pointerEvents = 'auto';
-    overlay.style.background = 'transparent';
-    const box = document.createElement('div');
-    Object.assign(box.style, {
-      fontFamily: 'Poppins, system-ui, sans-serif',
-      fontSize: '48px',
-      fontWeight: 800,
-      letterSpacing: '2px',
-      color: '#fff',
-      textAlign: 'center',
-      padding: '18px 26px',
-      borderRadius: '12px',
-      backdropFilter: 'blur(6px)',
-      WebkitBackdropFilter: 'blur(6px)',
-      boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-      transform: 'translateY(-6px)',
-      opacity: 0
-    });
-    overlay.appendChild(box);
+/* 1. Glitch Reveal */
+function glitchReveal() {
+  let text = "Nishant Jha";
+  let letters = text.split("");
+  let glitchInterval = setInterval(() => {
+    nameEl.innerText = letters.map(l =>
+      Math.random() > 0.7 ? String.fromCharCode(65+Math.random()*26) : l
+    ).join("");
+  }, 50);
+  nameEl.style.opacity = 1;
+  setTimeout(() => {
+    clearInterval(glitchInterval);
+    nameEl.innerText = text;
+    setTimeout(() => { nameEl.style.opacity = 0; }, 2000);
+  }, 1500);
+}
 
-    // glitch letters logic: display placeholders and animate each letter
-    const letters = secretName.split('');
-    const placeholders = letters.map(()=>document.createElement('span'));
-    placeholders.forEach((el,i)=>{
-      el.textContent = '_';
-      el.style.display='inline-block';
-      el.style.minWidth='10px';
-      el.style.margin='0 2px';
-      placeholders[i] = el;
-      box.appendChild(el);
-    });
-
-    // flicker intro
-    requestAnimationFrame(()=> {
-      box.style.opacity = 1;
-    });
-
-    // helper: random char
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ@#&$%0123456789';
-    let i = 0;
-    function revealNext() {
-      if(i >= letters.length) {
-        // final glow then vanish
-        box.animate([{filter:'brightness(1)'},{filter:'brightness(1.6)'},{filter:'brightness(1)'}], {duration:700});
-        setTimeout(()=> cleanUp(overlay, 600), 1200);
-        return;
-      }
-      const target = letters[i];
-      const el = placeholders[i];
-      let cycles = 12 + Math.floor(Math.random()*18);
-      let run = 0;
-      const t = setInterval(()=>{
-        if(run >= cycles) {
-          clearInterval(t);
-          el.textContent = target;
-          el.style.color = '#fff';
-          el.style.textShadow = '0 6px 18px rgba(0,255,200,0.14)';
-          // sparkle near letter
-          const rect = el.getBoundingClientRect();
-          spawnSparkle(rect.left + rect.width/2, rect.top + rect.height/2, overlay, '#6ecfff', 8, 700);
-          i++;
-          setTimeout(revealNext, 120 + Math.random()*240);
-        } else {
-          el.textContent = chars[Math.floor(Math.random()*chars.length)];
-        }
-        run++;
-      }, 30);
+/* 2. Typewriter + Sparkles */
+function typewriterReveal() {
+  let text = "Nishant Jha";
+  nameEl.innerText = "";
+  nameEl.style.opacity = 1;
+  let i = 0;
+  let interval = setInterval(() => {
+    nameEl.innerText += text[i];
+    burstSparkles();
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      setTimeout(() => { nameEl.style.opacity = 0; }, 2000);
     }
-    revealNext();
+  }, 150);
+}
+
+function burstSparkles() {
+  for (let i=0; i<40; i++) {
+    let s = document.createElement("div");
+    s.className = "sparkle";
+    document.body.appendChild(s);
+    s.style.top = window.innerHeight/2 + "px";
+    s.style.left = window.innerWidth/2 + "px";
+    let dx = (Math.random()-0.5) * 400;
+    let dy = (Math.random()-0.5) * 400;
+    s.animate([
+      { transform: "translate(0,0)", opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px)`, opacity: 0 }
+    ], { duration: 1000, easing: "ease-out" });
+    setTimeout(() => s.remove(), 1000);
+  }
+}
+
+/* 3. Crystal Shatter */
+function crystalShatter() {
+  shatterOverlay.style.display = "block";
+  for (let i=0; i<20; i++) {
+    let shard = document.createElement("div");
+    shard.className = "shard";
+    shard.style.top = Math.random()*window.innerHeight + "px";
+    shard.style.left = Math.random()*window.innerWidth + "px";
+    shard.style.transform = `rotate(${Math.random()*360}deg)`;
+    shatterOverlay.appendChild(shard);
+    setTimeout(() => shard.remove(), 1200);
+  }
+  showName(2000);
+  setTimeout(() => { shatterOverlay.style.display = "none"; }, 1200);
+}
+
+/* 4. Particle Swirl */
+function particleSwirl() {
+  let canvas = document.createElement("canvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.position = "fixed";
+  canvas.style.top = 0;
+  canvas.style.left = 0;
+  canvas.style.zIndex = 998;
+  document.body.appendChild(canvas);
+
+  let ctx = canvas.getContext("2d");
+  let particles = [];
+  for (let i=0; i<150; i++) {
+    particles.push({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      dx: (Math.random()-0.5)*2,
+      dy: (Math.random()-0.5)*2
+    });
   }
 
-  /* ===== 2) TYPEWRITER + SPARKLES (header clicks) ===== */
-  function playTypewriterSparkles() {
-    const overlay = makeOverlay('type-overlay');
-    overlay.style.pointerEvents = 'auto';
-    overlay.style.background = 'linear-gradient(180deg, rgba(0,0,0,0.45), rgba(0,0,0,0.3))';
-    const holder = document.createElement('div');
-    Object.assign(holder.style, {
-      padding: '14px 22px', borderRadius: '12px', background: 'rgba(255,255,255,0.04)',
-      border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(6px)',
-      display:'inline-block', pointerEvents:'none'
+  function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(p.x, p.y, 2, 2);
+      p.x += p.dx; p.y += p.dy;
     });
-    const textEl = document.createElement('div');
-    Object.assign(textEl.style, {
-      fontFamily: 'Poppins, sans-serif', fontSize:'42px', fontWeight:800, color:'#fff', letterSpacing:'1px'
-    });
-    holder.appendChild(textEl);
-    overlay.appendChild(holder);
+  }
 
-    let idx = 0;
-    function typeStep() {
-      if(idx > secretName.length) {
-        // after complete, glitter surge then vanish
-        holder.animate([{transform:'scale(1)'},{transform:'scale(1.03)'},{transform:'scale(1)'}], {duration:900});
-        setTimeout(()=> cleanUp(overlay, 700), 1200);
-        return;
-      }
-      textEl.textContent = secretName.slice(0, idx);
-      // spawn a few sparkles around the holder
-      const rect = holder.getBoundingClientRect();
-      for(let s=0;s<3;s++){
-        spawnSparkle(rect.left + rect.width/2 + (Math.random()*120-60), rect.top + rect.height/2 + (Math.random()*40-20), overlay, ['#ff6ec7','#6ecfff','#ffe66e'][Math.floor(Math.random()*3)], 6, 900);
-      }
-      idx++;
-      setTimeout(typeStep, 90 + Math.random()*90);
+  let anim = setInterval(animate, 30);
+  setTimeout(() => {
+    clearInterval(anim);
+    canvas.remove();
+    showName(2000);
+  }, 2000);
+}
+
+/* 5. Rune Morph */
+function runeMorph() {
+  let runes = ["ᚠ","ᚢ","ᚦ","ᚨ","ᚱ","ᚲ","ᚷ","ᚹ"];
+  let text = "Nishant Jha";
+  let letters = text.split("");
+  nameEl.innerText = "";
+  nameEl.style.opacity = 1;
+  let i = 0;
+  let interval = setInterval(() => {
+    nameEl.innerText = letters.map((l, idx) =>
+      idx <= i ? l : runes[Math.floor(Math.random()*runes.length)]
+    ).join("");
+    i++;
+    if (i > letters.length) {
+      clearInterval(interval);
+      setTimeout(() => { nameEl.style.opacity = 0; }, 2000);
     }
-    typeStep();
+  }, 200);
+}
+
+/* Event Handling */
+window.addEventListener("keydown", (e) => {
+  typed += e.key.toLowerCase();
+  if (typed.endsWith("nishant")) { glitchReveal(); typed=""; }
+  if (typed.endsWith("particle")) { particleSwirl(); typed=""; }
+  if (typed.endsWith("ruin")) { runeMorph(); typed=""; }
+});
+
+header.addEventListener("click", () => {
+  headerClicks++;
+  if (headerClicks === 5) {
+    typewriterReveal();
+    headerClicks = 0;
   }
+});
 
-  /* ===== 3) MIRROR SHATTER (footer long press) ===== */
-  function playMirrorShatter() {
-    const overlay = makeOverlay('shatter-overlay');
-    overlay.style.background = 'linear-gradient(180deg, rgba(10,12,16,0.85), rgba(5,6,10,0.85))';
-    overlay.style.pointerEvents = 'auto';
-
-    // glass layer
-    const glass = document.createElement('div');
-    Object.assign(glass.style, {
-      position:'absolute', left:0, top:0, width:'100%', height:'100%',
-      background: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.02), transparent 20%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02))',
-      mixBlendMode: 'overlay',
-      pointerEvents:'none'
-    });
-    overlay.appendChild(glass);
-
-    // create shards (rectangles approximating shards) then animate them outwards
-    const shards = [];
-    const shardCount = 10;
-    for(let i=0;i<shardCount;i++){
-      const s = document.createElement('div');
-      const w = 60 + Math.random()*160;
-      const h = 40 + Math.random()*140;
-      Object.assign(s.style, {
-        position:'absolute',
-        left: `${20 + Math.random()*60}%`,
-        top: `${20 + Math.random()*60}%`,
-        width: w + 'px',
-        height: h + 'px',
-        transformOrigin: 'center',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))',
-        border: '1px solid rgba(255,255,255,0.03)',
-        borderRadius: '4px',
-        pointerEvents: 'none',
-        transition: 'transform 900ms cubic-bezier(.2,.8,.2,1), opacity 1000ms ease'
-      });
-      overlay.appendChild(s);
-      shards.push(s);
-    }
-
-    // center glowing name behind shards
-    const nameBox = document.createElement('div');
-    Object.assign(nameBox.style, {
-      fontFamily:'Poppins, sans-serif', fontSize:'46px', fontWeight:900, color:'#fff',
-      textAlign:'center', zIndex: 5, pointerEvents: 'none', opacity: 0,
-      textShadow: '0 12px 40px rgba(0,200,255,0.12)'
-    });
-    nameBox.textContent = secretName;
-    overlay.appendChild(nameBox);
-
-    // pre-crack pulse
-    overlay.animate([{opacity:0},{opacity:1}], {duration:200, fill:'forwards'});
-
-    // animate shards as "shattering" then reveal name
-    setTimeout(()=>{
-      shards.forEach((s, idx) => {
-        const dx = (Math.random()*2 - 1) * (200 + Math.random()*300);
-        const dy = - (200 + Math.random()*200) + (Math.random()*200 - 100);
-        const rot = (Math.random()*80 - 40);
-        s.style.transform = `translate(${dx}px, ${dy}px) rotate(${rot}deg)`;
-        s.style.opacity = '0';
-      });
-      // show name after shards move
-      setTimeout(()=> {
-        nameBox.style.transition = 'opacity 500ms ease, transform 600ms cubic-bezier(.2,.9,.3,1)';
-        nameBox.style.opacity = 1;
-        nameBox.style.transform = 'scale(1.02)';
-      }, 420);
-    }, 220);
-
-    // after a while, fade out entire overlay
-    setTimeout(()=> cleanUp(overlay, 700), 1800);
-  }
-
-  /* ===== 4) PARTICLE SWIRL (press 'P') =====
-     Uses canvas; particles move to form text (drawn to an offscreen canvas then sample points).
-  */
-  function playParticleSwirl() {
-    const overlay = makeOverlay('particle-overlay');
-    overlay.style.background = 'radial-gradient(circle at 50% 40%, rgba(0,0,0,0.15), rgba(0,0,0,0.55))';
-    overlay.style.pointerEvents = 'auto';
-
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.min(window.innerWidth, 1000);
-    canvas.height = Math.min(window.innerHeight, 600);
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.maxWidth = '100vw';
-    canvas.style.maxHeight = '100vh';
-    canvas.style.display = 'block';
-    canvas.style.pointerEvents = 'none';
-    overlay.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-
-    // create offscreen canvas to draw text and sample pixel positions
-    const off = document.createElement('canvas');
-    off.width = canvas.width;
-    off.height = canvas.height;
-    const octx = off.getContext('2d');
-    // draw big text centered
-    const fontSize = Math.floor(off.width * 0.08);
-    octx.fillStyle = '#ffffff';
-    octx.font = `bold ${fontSize}px Poppins, sans-serif`;
-    octx.textAlign = 'center';
-    octx.textBaseline = 'middle';
-    const cx = off.width/2, cy = off.height/2;
-    octx.fillText(secretName, cx, cy);
-
-    // sample points
-    const img = octx.getImageData(0,0,off.width,off.height);
-    const points = [];
-    const gap = 8; // sampling gap: higher = fewer particles
-    for(let y=0; y<off.height; y += gap){
-      for(let x=0; x<off.width; x += gap){
-        const idx = (y*off.width + x)*4;
-        if(img.data[idx+3] > 128) { // alpha > 128
-          points.push({x, y});
-        }
-      }
-    }
-    // create particles
-    const particles = [];
-    for(let i=0; i<points.length; i++){
-      const p = {
-        x: Math.random()*canvas.width,
-        y: Math.random()*canvas.height,
-        vx: 0, vy: 0,
-        tx: points[i].x + (Math.random()*6-3),
-        ty: points[i].y + (Math.random()*6-3),
-        r: 1 + Math.random()*2,
-        hue: 180 + Math.random()*120
-      };
-      particles.push(p);
-    }
-
-    // animation loop: swirl to center then lock into target positions
-    let t = 0;
-    function step(){
-      ctx.clearRect(0,0,canvas.width, canvas.height);
-      t += 0.02;
-      for(let i=0;i<particles.length;i++){
-        const p = particles[i];
-        // force towards center swirl initially
-        const cx = canvas.width/2, cy = canvas.height/2;
-        const ax = (cx - p.x) * 0.002; 
-        const ay = (cy - p.y) * 0.002;
-        // swirl component
-        const angle = Math.atan2(p.y - cy, p.x - cx) + 0.02;
-        const swirl = 0.6 * Math.sin(t + i*0.01);
-        p.vx = (p.vx + ax + Math.cos(angle)*0.2*swirl) * 0.92;
-        p.vy = (p.vy + ay + Math.sin(angle)*0.2*swirl) * 0.92;
-        // after some time, attract to target
-        const progress = Math.min(1, (t/2.2));
-        p.vx += (p.tx - p.x) * 0.02 * progress;
-        p.vy += (p.ty - p.y) * 0.02 * progress;
-
-        p.x += p.vx;
-        p.y += p.vy;
-
-        ctx.beginPath();
-        ctx.fillStyle = `hsl(${p.hue}, 80%, 60%)`;
-        ctx.globalAlpha = 0.9;
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-        ctx.fill();
-      }
-      if(t < 4) {
-        requestAnimationFrame(step);
-      } else {
-        // hold final image briefly then fade out
-        setTimeout(()=> cleanUp(overlay, 900), 900);
-      }
-    }
-    step();
-  }
-
-  /* ===== 5) RUNE MORPH (press 'R') ===== */
-  function playRuneMorph() {
-    const overlay = makeOverlay('rune-overlay');
-    overlay.style.pointerEvents = 'auto';
-    overlay.style.background = 'linear-gradient(180deg, rgba(6,6,10,0.6), rgba(2,2,6,0.9))';
-
-    const container = document.createElement('div');
-    Object.assign(container.style, {
-      display:'flex', gap:'10px', alignItems:'center', justifyContent:'center',
-      fontFamily:'Poppins, sans-serif', fontSize:'46px', fontWeight:900,
-      color:'#fff', pointerEvents:'none'
-    });
-    overlay.appendChild(container);
-
-    // split into letter boxes
-    const letters = secretName.split('');
-    const letterEls = letters.map(ch => {
-      const box = document.createElement('div');
-      box.style.minWidth = '18px';
-      box.style.textAlign = 'center';
-      box.style.position = 'relative';
-      box.style.opacity = '0';
-      box.style.transition = 'opacity 220ms ease';
-      container.appendChild(box);
-      return box;
-    });
-
-    // rune list (mix of interesting unicode glyphs)
-    const runes = ['ᛟ','ᚠ','ᛞ','ᚱ','ᛇ','✦','✷','ꙮ','◇','※','卍','↯','♆','⌘','✥'];
-    // show runes then morph
-    letterEls.forEach((el, i) => {
-      setTimeout(()=>{
-        el.style.opacity = '1';
-        const rune = document.createElement('div');
-        rune.textContent = runes[Math.floor(Math.random()*runes.length)];
-        rune.style.fontSize = '42px';
-        rune.style.opacity = '0';
-        rune.style.transition = 'transform .5s ease, opacity .4s ease';
-        rune.style.transform = 'translateY(8px) scale(.9)';
-        el.appendChild(rune);
-        // animate rune in
-        requestAnimationFrame(()=>{ rune.style.opacity = '1'; rune.style.transform = 'translateY(0) scale(1)'; });
-
-        // after small delay morph rune -> actual letter
-        setTimeout(()=>{
-          rune.style.opacity = '0';
-          rune.style.transform = 'translateY(-6px) scale(.8)';
-          setTimeout(()=>{
-            el.textContent = letters[i];
-            el.style.textShadow = '0 8px 30px rgba(160,120,255,0.12)';
-            el.style.opacity = '1';
-          }, 260);
-        }, 650 + Math.random()*260);
-      }, 120*i);
-    });
-
-    // fade out after a while
-    setTimeout(()=> cleanUp(overlay, 700), 2000 + letters.length * 120);
-  }
-
-  /* ===== TRIGGER WIRING ===== */
-  // typing sequence for glitch
-  document.addEventListener('keydown', (e) => {
-    const k = (e.key || '').toLowerCase();
-    if(!k) return;
-    if(k === seq[seqPos]) {
-      seqPos++;
-      clearTimeout(seqTimer);
-      seqTimer = setTimeout(()=> seqPos = 0, seqTimeout);
-      if(seqPos === seq.length) {
-        seqPos = 0;
-        playGlitchReveal();
-      }
-    } else {
-      // reset unless they pressed first letter
-      seqPos = (k === seq[0]) ? 1 : 0;
-    }
-  });
-
-  // header clicks -> typewriter
-  const header = document.querySelector('header') || document.querySelector('h1') || document.body;
-  if(header) {
-    header.style.cursor = 'pointer';
-    header.addEventListener('click', () => {
-      headerClicks++;
-      if(headerClicks >= clicksToReveal) {
-        headerClicks = 0;
-        playTypewriterSparkles();
-      }
-      clearTimeout(window._secret_hdr_timer);
-      window._secret_hdr_timer = setTimeout(()=> headerClicks = 0, 1800);
-    });
-  }
-
-  // footer long press -> mirror shatter
-  const footer = document.querySelector('footer');
-  if(footer) {
-    footer.addEventListener('pointerdown', () => {
-      footerPressTimer = setTimeout(()=> { playMirrorShatter(); }, 1000);
-    });
-    ['pointerup','pointerleave','pointercancel'].forEach(evt => {
-      footer.addEventListener(evt, ()=> {
-        if(footerPressTimer) { clearTimeout(footerPressTimer); footerPressTimer = null; }
-      });
-    });
-  }
-
-  // key 'P' -> particle swirl
-  document.addEventListener('keydown', (e) => {
-    if(e.key && e.key.toLowerCase() === 'p') playParticleSwirl();
-  });
-
-  // key 'R' -> rune morph
-  document.addEventListener('keydown', (e) => {
-    if(e.key && e.key.toLowerCase() === 'r') playRuneMorph();
-  });
-
-  /* keep overlay class styles minimal (for possible global tweaks) */
-  const globalStyle = document.createElement('style');
-  globalStyle.textContent = `
-    .secret-overlay { opacity: 1; transition: opacity .3s ease; }
-    .mini-sparkle { will-change: transform, opacity; }
-  `;
-  document.head.appendChild(globalStyle);
-
-  /* Accessibility: optionally notify console */
-  console.log('Secret reveal modes loaded — triggers:\n- Type "nishant" -> Glitch\n- 5 header clicks -> Typewriter+Sparkles\n- Long-press footer -> Mirror Shatter\n- Press "P" -> Particle Swirl\n- Press "R" -> Rune Morph');
-})();
+footer.addEventListener("mousedown", () => {
+  footerTimer = setTimeout(() => { crystalShatter(); }, 1000);
+});
+footer.addEventListener("mouseup", () => {
+  clearTimeout(footerTimer);
+});
 </script>
+
 
 
 
