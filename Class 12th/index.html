@@ -87,23 +87,24 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: transparent; /* no background */
+  background: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 0 10px rgba(255,255,255,0.2);
+  box-shadow: 0 0 8px rgba(255,255,255,0.2);
 }
 
 .theme-orb:hover {
   transform: scale(1.15);
-  box-shadow: 0 0 20px rgba(255,255,255,0.4);
+  box-shadow: 0 0 16px rgba(255,255,255,0.4);
 }
 
-#theme-icon path {
+#theme-icon {
   transition: all 0.5s ease;
 }
+
 
 
 
@@ -388,11 +389,22 @@ body.light .progress-text{
 <h1>PrepGuide</h1>
 <p>Track your progress and master every chapter! 🌟</p>
 <button id="theme-toggle" class="theme-orb">
-  <svg id="theme-icon" width="24" height="24" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
-    <!-- Moon icon initially -->
-    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+  <svg id="theme-icon" width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <!-- Default: Dark theme → show Sun -->
+    <circle cx="12" cy="12" r="5" fill="white"/>
+    <g stroke="white" stroke-width="2">
+      <line x1="12" y1="1" x2="12" y2="4"/>
+      <line x1="12" y1="20" x2="12" y2="23"/>
+      <line x1="1" y1="12" x2="4" y2="12"/>
+      <line x1="20" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="4.22" x2="6.36" y2="6.36"/>
+      <line x1="17.64" y1="17.64" x2="19.78" y2="19.78"/>
+      <line x1="4.22" y1="19.78" x2="6.36" y2="17.64"/>
+      <line x1="17.64" y1="6.36" x2="19.78" y2="4.22"/>
+    </g>
   </svg>
 </button>
+
 
 
 
@@ -609,22 +621,38 @@ if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setIte
 const themeToggle = document.getElementById('theme-toggle');
 const themeIcon = document.getElementById('theme-icon');
 
-const moonPath = "M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"; // moon
-const sunPath = "M12 4V2M12 22v-2M4.22 4.22l-1.42-1.42M21.2 21.2l-1.42-1.42M2 12H4M20 12h2M4.22 19.78l-1.42 1.42M21.2 2.8l-1.42 1.42M12 6a6 6 0 100 12 6 6 0 000-12z"; // sun
+const sunSVG = `
+<circle cx="12" cy="12" r="5" fill="white"/>
+<g stroke="white" stroke-width="2">
+  <line x1="12" y1="1" x2="12" y2="4"/>
+  <line x1="12" y1="20" x2="12" y2="23"/>
+  <line x1="1" y1="12" x2="4" y2="12"/>
+  <line x1="20" y1="12" x2="23" y2="12"/>
+  <line x1="4.22" y1="4.22" x2="6.36" y2="6.36"/>
+  <line x1="17.64" y1="17.64" x2="19.78" y2="19.78"/>
+  <line x1="4.22" y1="19.78" x2="6.36" y2="17.64"/>
+  <line x1="17.64" y1="6.36" x2="19.78" y2="4.22"/>
+</g>
+`;
+
+const moonSVG = `
+<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="black"/>
+`;
 
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light');
 
   if(document.body.classList.contains('light')){
-    themeIcon.setAttribute("fill", "black");
-    themeIcon.innerHTML = `<path d="${sunPath}" />`;
+    // Light theme → show black moon
+    themeIcon.innerHTML = moonSVG;
   } else {
-    themeIcon.setAttribute("fill", "white");
-    themeIcon.innerHTML = `<path d="${moonPath}" />`;
+    // Dark theme → show white sun
+    themeIcon.innerHTML = sunSVG;
   }
 
-  render(searchInput.value); // keep your progress bars updated
+  render(searchInput.value); // keep your checklist updated
 });
+
 
 
 
