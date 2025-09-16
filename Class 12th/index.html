@@ -534,12 +534,15 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script><!-- ===== Stylish secret owner modal (fixed header click) ===== -->
+<!-- ===== Stylish secret owner modal with continuous sparkles + footer long press ===== -->
 <script>
 (() => {
   const secretSequence = ['n','i','s','h','a','n','t'];
   let seqPos = 0;
   let headerClicks = 0;
   const clicksToReveal = 5;
+  let sparkleInterval = null;
+  let pressTimer = null;
 
   // style
   const style = document.createElement('style');
@@ -565,8 +568,17 @@ if ("serviceWorker" in navigator) {
   #secret-name{font-size:1.2rem;font-weight:800;margin-bottom:4px;}
   .secret-btn{padding:8px 12px;border-radius:10px;font-weight:700;cursor:pointer;border:0;}
   #close-secret{background:#222;color:#fff;}#copy-secret{background:linear-gradient(90deg,#36d1dc,#5b86e5);color:#fff;}
-  #secret-sparkle{position:absolute;right:-10px;top:-10px;width:44px;height:44px;opacity:0;transition:.35s;}
-  #secret-modal.show #secret-sparkle{opacity:.9;}
+  .sparkle {
+    position: fixed; width:6px; height:6px; border-radius:50%; pointer-events:none;
+    opacity:0; z-index:99998;
+    animation: sparkleFlow 2s linear forwards;
+  }
+  @keyframes sparkleFlow {
+    0% { transform:scale(.4) translateY(0); opacity:0; }
+    20%{ opacity:1; }
+    80%{ opacity:.9; }
+    100%{ transform:scale(1.6) translateY(80px); opacity:0; }
+  }
   `;
   document.head.appendChild(style);
 
@@ -584,28 +596,40 @@ if ("serviceWorker" in navigator) {
         <button id="close-secret" class="secret-btn">Close</button>
       </div>
     </div>
-    <div id="secret-sparkle"></div>
   `;
   document.body.appendChild(wrap);
 
-  // helpers
-  const showSecret = () => {
-    wrap.classList.add('show');
-    // confetti effect
-    for(let i=0;i<25;i++){
-      const c=document.createElement('div');
-      c.textContent='🎉';
-      c.style.position='fixed';
-      c.style.left=Math.random()*100+'vw';
-      c.style.top='-2vh';
-      c.style.fontSize='20px';
-      c.style.transition='transform 1.2s ease, top 1.2s ease';
-      document.body.appendChild(c);
-      setTimeout(()=>{c.style.top='100vh';c.style.transform='rotate(720deg)';},50);
-      setTimeout(()=>c.remove(),1500);
-    }
+  // sparkle generator
+  function makeSparkle() {
+    const colors = ['#ff6ec7','#6ecfff','#ffe66e','#9dff6e','#ff6e6e'];
+    const s=document.createElement('div');
+    s.className='sparkle';
+    const size=4+Math.random()*6;
+    s.style.width=size+'px';
+    s.style.height=size+'px';
+    s.style.left=Math.random()*100+'vw';
+    s.style.top=Math.random()*100+'vh';
+    s.style.background=`radial-gradient(circle, ${colors[Math.floor(Math.random()*colors.length)]} 0%, transparent 70%)`;
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(),2200);
+  }
+
+  const startSparkles = () => {
+    sparkleInterval = setInterval(makeSparkle, 120);
   };
-  const hideSecret = () => wrap.classList.remove('show');
+  const stopSparkles = () => {
+    clearInterval(sparkleInterval);
+    sparkleInterval=null;
+  };
+
+  const showSecret = () => { 
+    wrap.classList.add('show'); 
+    startSparkles();
+  };
+  const hideSecret = () => {
+    wrap.classList.remove('show');
+    stopSparkles();
+  };
 
   // copy/close
   document.addEventListener('click', e=>{
@@ -631,11 +655,24 @@ if ("serviceWorker" in navigator) {
     });
   }
 
+  // footer long press
+  const footerEl = document.querySelector('footer');
+  if(footerEl){
+    footerEl.addEventListener('pointerdown', () => {
+      pressTimer = setTimeout(()=>showSecret(), 1000); // 1s hold
+    });
+    footerEl.addEventListener('pointerup', ()=> clearTimeout(pressTimer));
+    footerEl.addEventListener('pointerleave', ()=> clearTimeout(pressTimer));
+  }
+
   // escape + outside
   document.addEventListener('keydown',e=>{if(e.key==='Escape') hideSecret();});
-  document.addEventListener('click',e=>{if(!wrap.contains(e.target)&&wrap.classList.contains('show')&&!e.target.closest('header')) hideSecret();});
+  document.addEventListener('click',e=>{
+    if(!wrap.contains(e.target)&&wrap.classList.contains('show')&&!e.target.closest('header')) hideSecret();
+  });
 })();
 </script>
+
 
 </body>
 </html>
