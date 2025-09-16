@@ -95,16 +95,16 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: 0 0 8px rgba(255,255,255,0.2);
 }
+
 .theme-orb:hover {
   transform: scale(1.15);
   box-shadow: 0 0 16px rgba(255,255,255,0.4);
 }
 
-#theme-icon .sun-core, 
-#theme-icon .sun-rays,
-#theme-icon .moon {
+#theme-icon {
   transition: all 0.5s ease;
 }
+
 
 
 
@@ -391,10 +391,10 @@ body.light .progress-text{
 <h1>PrepGuide</h1>
 <p>Track your progress and master every chapter! 🌟</p>
 <button id="theme-toggle" class="theme-orb">
-  <svg id="theme-icon" width="32" height="32" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <!-- Default: Dark theme → Sun -->
-    <circle class="sun-core" cx="12" cy="12" r="5" fill="white"/>
-    <g class="sun-rays" stroke="white" stroke-width="2">
+  <svg id="theme-icon" width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <!-- Default: Dark theme → show Sun -->
+    <circle cx="12" cy="12" r="5" fill="white"/>
+    <g stroke="white" stroke-width="2">
       <line x1="12" y1="1" x2="12" y2="4"/>
       <line x1="12" y1="20" x2="12" y2="23"/>
       <line x1="1" y1="12" x2="4" y2="12"/>
@@ -404,11 +404,9 @@ body.light .progress-text{
       <line x1="4.22" y1="19.78" x2="6.36" y2="17.64"/>
       <line x1="17.64" y1="6.36" x2="19.78" y2="4.22"/>
     </g>
-
-    <!-- Moon (hidden by default) -->
-    <path class="moon" d="M16 12a6 6 0 1 1-8-8 8 8 0 0 0 8 8z" fill="black" style="opacity:0"/>
   </svg>
 </button>
+
 
 
 
@@ -624,27 +622,40 @@ document.getElementById('reset-btn').addEventListener('click',()=>{
 if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setItem('jeeChecklist',JSON.stringify(saved)); render(searchInput.value);}
 });
 const themeToggle = document.getElementById('theme-toggle');
-const sunCore = document.querySelector('#theme-icon .sun-core');
-const sunRays = document.querySelector('#theme-icon .sun-rays');
-const moon = document.querySelector('#theme-icon .moon');
+const themeIcon = document.getElementById('theme-icon');
+
+const sunSVG = `
+<circle cx="12" cy="12" r="5" fill="white"/>
+<g stroke="white" stroke-width="2">
+  <line x1="12" y1="1" x2="12" y2="4"/>
+  <line x1="12" y1="20" x2="12" y2="23"/>
+  <line x1="1" y1="12" x2="4" y2="12"/>
+  <line x1="20" y1="12" x2="23" y2="12"/>
+  <line x1="4.22" y1="4.22" x2="6.36" y2="6.36"/>
+  <line x1="17.64" y1="17.64" x2="19.78" y2="19.78"/>
+  <line x1="4.22" y1="19.78" x2="6.36" y2="17.64"/>
+  <line x1="17.64" y1="6.36" x2="19.78" y2="4.22"/>
+</g>
+`;
+
+const moonSVG = `
+<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" fill="black"/>
+`;
 
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light');
 
   if(document.body.classList.contains('light')){
-    // Light theme → show moon
-    moon.style.opacity = 1;
-    sunCore.style.opacity = 0;
-    sunRays.style.opacity = 0;
+    // Light theme → show black moon
+    themeIcon.innerHTML = moonSVG;
   } else {
-    // Dark theme → show sun
-    moon.style.opacity = 0;
-    sunCore.style.opacity = 1;
-    sunRays.style.opacity = 1;
+    // Dark theme → show white sun
+    themeIcon.innerHTML = sunSVG;
   }
 
-  render(searchInput.value); // keep checklist updated
+  render(searchInput.value); // keep your checklist updated
 });
+
 
 
 
