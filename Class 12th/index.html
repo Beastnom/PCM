@@ -100,15 +100,12 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
   box-shadow: 0 0 16px rgba(255,255,255,0.4);
 }
 
-#theme-icon {
+#theme-icon .sun-core, 
+#theme-icon .sun-rays,
+#theme-icon .moon {
   transition: all 0.5s ease;
 }
-#theme-icon .core {
-  transition: fill 0.5s ease, r 0.5s ease;
-}
-#theme-icon .rays {
-  transition: opacity 0.5s ease;
-}
+
 
 
 
@@ -396,9 +393,9 @@ body.light .progress-text{
 <p>Track your progress and master every chapter! 🌟</p>
 <button id="theme-toggle" class="theme-orb">
   <svg id="theme-icon" width="32" height="32" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <!-- Default: Dark theme → show Sun -->
-    <circle class="core" cx="12" cy="12" r="5" fill="white"/>
-    <g class="rays" stroke="white" stroke-width="2">
+    <!-- Default: Dark theme → Sun -->
+    <circle class="sun-core" cx="12" cy="12" r="5" fill="white"/>
+    <g class="sun-rays" stroke="white" stroke-width="2">
       <line x1="12" y1="1" x2="12" y2="4"/>
       <line x1="12" y1="20" x2="12" y2="23"/>
       <line x1="1" y1="12" x2="4" y2="12"/>
@@ -408,6 +405,9 @@ body.light .progress-text{
       <line x1="4.22" y1="19.78" x2="6.36" y2="17.64"/>
       <line x1="17.64" y1="6.36" x2="19.78" y2="4.22"/>
     </g>
+
+    <!-- Moon (hidden by default) -->
+    <path class="moon" d="M14 12a6 6 0 1 1-6-6 4 4 0 0 0 6 6z" fill="black" style="opacity:0"/>
   </svg>
 </button>
 
@@ -624,29 +624,29 @@ render(searchInput.value);
 document.getElementById('reset-btn').addEventListener('click',()=>{
 if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setItem('jeeChecklist',JSON.stringify(saved)); render(searchInput.value);}
 });
-
 const themeToggle = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-const core = themeIcon.querySelector('.core');
-const rays = themeIcon.querySelector('.rays');
+const sunCore = document.querySelector('#theme-icon .sun-core');
+const sunRays = document.querySelector('#theme-icon .sun-rays');
+const moon = document.querySelector('#theme-icon .moon');
 
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light');
 
   if(document.body.classList.contains('light')){
-    // Light theme → morph to moon
-    core.setAttribute('fill', 'black');
-    core.setAttribute('r', '7'); // slightly bigger moon
-    rays.style.opacity = 0; // hide sun rays
+    // Light theme → show moon
+    moon.style.opacity = 1;
+    sunCore.style.opacity = 0;
+    sunRays.style.opacity = 0;
   } else {
-    // Dark theme → morph to sun
-    core.setAttribute('fill', 'white');
-    core.setAttribute('r', '5'); // normal sun radius
-    rays.style.opacity = 1; // show rays
+    // Dark theme → show sun
+    moon.style.opacity = 0;
+    sunCore.style.opacity = 1;
+    sunRays.style.opacity = 1;
   }
 
   render(searchInput.value); // keep checklist updated
 });
+
 
 
 
