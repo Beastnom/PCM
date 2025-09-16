@@ -132,6 +132,21 @@ body.light .switch-handle {
   transform: scale(1.1);
 }
 
+.switch-handle::before {
+  content: "🌙";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  transition: all 0.4s ease;
+}
+
+body.light .switch-handle::before {
+  content: "☀️";
+}
+
+
 
 
 .container{ max-width:980px; margin:20px auto; padding:10px; }
