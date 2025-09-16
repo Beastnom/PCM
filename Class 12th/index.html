@@ -80,70 +80,52 @@ header h1:hover{
 header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
 
 
-#theme-toggle{
-  position:absolute; top:24px; right:24px;
-  width:42px; height:42px; border-radius:50%; border:none;
-  cursor:pointer; font-size:1.2rem;
-  background: linear-gradient(135deg,#ffb6c1,#f8c8ff);
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 6px 20px rgba(0,0,0,0.25);
-  transition: all 0.3s ease;
-}
-#theme-toggle:hover{ transform: scale(1.1) rotate(10deg); }
-
-/* Theme Switch Container */
-.theme-switch {
+.theme-orb {
   position: absolute;
   top: 24px;
   right: 24px;
-  width: 60px;
-  height: 32px;
-  border-radius: 20px;
-  background: linear-gradient(135deg,#ff4e50,#f9d423); /* default dark theme */
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #00f260, #0575e6);
+  box-shadow: 0 0 15px #00f260, 0 0 30px #0575e6, 0 0 45px rgba(0,255,255,0.2);
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+  transition: all 0.4s ease, box-shadow 0.6s ease;
   display: flex;
   align-items: center;
-  padding: 3px;
-  transition: all 0.4s ease;
+  justify-content: center;
+  z-index: 1000;
 }
 
-/* Handle */
-.switch-handle {
-  width: 26px;
-  height: 26px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-  transition: all 0.4s ease;
-}
-
-/* Light Mode Styles */
-body.light .theme-switch {
-  background: linear-gradient(135deg,#36d1dc,#5b86e5);
-}
-
-body.light .switch-handle {
-  transform: translateX(28px); /* slide handle to right */
-}
-
-/* Hover Effect */
-.theme-switch:hover {
-  transform: scale(1.1);
-}
-
-.switch-handle::before {
+.theme-orb::before {
   content: "🌙";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 16px;
-  transition: all 0.4s ease;
+  font-size: 22px;
+  transition: transform 0.4s ease;
 }
 
-body.light .switch-handle::before {
+body.light .theme-orb {
+  background: linear-gradient(145deg, #ffb6c1, #ffc0cb);
+  box-shadow: 0 0 15px #ffb6c1, 0 0 30px #ffc0cb, 0 0 45px rgba(255,182,193,0.3);
+}
+
+body.light .theme-orb::before {
   content: "☀️";
+  transform: scale(1.2) rotate(20deg);
+}
+
+/* Glow pulse animation */
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 15px #00f260, 0 0 30px #0575e6, 0 0 45px rgba(0,255,255,0.2); }
+  50% { box-shadow: 0 0 25px #00f260, 0 0 50px #0575e6, 0 0 60px rgba(0,255,255,0.3); }
+  100% { box-shadow: 0 0 15px #00f260, 0 0 30px #0575e6, 0 0 45px rgba(0,255,255,0.2); }
+}
+
+.theme-orb {
+  animation: glowPulse 2s infinite alternate;
+}
+
+.theme-orb:active {
+  transform: scale(1.2);
 }
 
 
@@ -427,8 +409,8 @@ body.light .progress-text{
 <header>
 <h1>PrepGuide</h1>
 <p>Track your progress and master every chapter! 🌟</p>
-<div id="theme-toggle" class="theme-switch">
-  <div class="switch-handle"></div>
+<div id="theme-toggle" class="theme-orb"></div>
+
 </div>
 
 </header>
@@ -642,7 +624,7 @@ if(confirm('Are you sure to reset all progress?')){saved={}; localStorage.setIte
 const themeToggle = document.getElementById('theme-toggle');
 themeToggle.addEventListener('click', () => {
   document.body.classList.toggle('light');
-  render(searchInput.value); 
+  render(searchInput.value); // update UI after theme change
 });
 
 
