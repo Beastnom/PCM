@@ -822,7 +822,8 @@ window.addEventListener("keydown", (e) => {
 });
 
 header.addEventListener("click", (e) => {
-  if (e.target.id === "theme-orb") return;
+  // Ignore clicks on the theme toggle button
+  if (e.target.closest('#theme-toggle')) return;
 
   headerClicks++;
   if (headerClicks === 5) {
@@ -830,6 +831,7 @@ header.addEventListener("click", (e) => {
     headerClicks = 0;
   }
 });
+
 
 
 footer.addEventListener("mousedown", () => {
