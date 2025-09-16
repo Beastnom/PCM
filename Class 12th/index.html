@@ -87,41 +87,33 @@ header p{ margin-top:8px; opacity:0.85; font-size:1.05rem; }
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #00f260, #0575e6);
-  box-shadow: 0 0 15px #00f260, 0 0 30px #0575e6, 0 0 45px rgba(0,255,255,0.2);
+  background: transparent; /* Removed gradient */
   cursor: pointer;
-  transition: all 0.4s ease, box-shadow 0.6s ease;
+  transition: all 0.4s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  box-shadow: 0 0 10px rgba(255,255,255,0.2); /* subtle glow */
 }
 
 .theme-orb::before {
-  content: "🌙";
-  font-size: 22px;
-  transition: transform 0.4s ease;
-}
-
-body.light .theme-orb {
-  background: linear-gradient(145deg, #ffb6c1, #ffc0cb);
-  box-shadow: 0 0 15px #ffb6c1, 0 0 30px #ffc0cb, 0 0 45px rgba(255,182,193,0.3);
+  content: "🌙"; /* moon icon for dark */
+  font-size: 24px;
+  color: #fff; /* white color */
+  transition: transform 0.4s ease, color 0.4s ease;
 }
 
 body.light .theme-orb::before {
-  content: "☀️";
-  transform: scale(1.2) rotate(20deg);
+  content: "☀️"; /* sun icon for light */
+  color: #000; /* black color */
+  transform: scale(1.1); /* slight emphasis */
 }
 
-/* Glow pulse animation */
-@keyframes glowPulse {
-  0% { box-shadow: 0 0 15px #00f260, 0 0 30px #0575e6, 0 0 45px rgba(0,255,255,0.2); }
-  50% { box-shadow: 0 0 25px #00f260, 0 0 50px #0575e6, 0 0 60px rgba(0,255,255,0.3); }
-  100% { box-shadow: 0 0 15px #00f260, 0 0 30px #0575e6, 0 0 45px rgba(0,255,255,0.2); }
-}
-
-.theme-orb {
-  animation: glowPulse 2s infinite alternate;
+/* Optional pulse on hover */
+.theme-orb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 15px rgba(255,255,255,0.4);
 }
 
 .theme-orb:active {
